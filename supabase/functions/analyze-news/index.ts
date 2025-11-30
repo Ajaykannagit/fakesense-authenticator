@@ -20,10 +20,10 @@ serve(async (req) => {
       );
     }
 
-    // Check if text looks like binary/PDF data
-    if (text.startsWith('%PDF') || text.includes('\u0000') || text.includes('endobj')) {
+    // Check if text looks like binary/PDF data (only check for clear binary indicators)
+    if (text.startsWith('%PDF-') || text.includes('\u0000')) {
       return new Response(
-        JSON.stringify({ error: 'Binary or PDF files cannot be analyzed. Please use plain text files.' }),
+        JSON.stringify({ error: 'Binary or PDF files cannot be analyzed. Please paste plain text or use a .txt file.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

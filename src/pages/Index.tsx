@@ -16,25 +16,48 @@ const Index = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.txt')) {
-      toast.error("Currently only .txt files are supported. PDF support coming soon!");
-      return;
+    // Handle different file types
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.rtf')) {
+      // Text-based files - read directly
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        if (content.trim()) {
+          setText(content);
+          toast.success("File loaded successfully");
+        } else {
+          toast.error("File appears to be empty");
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read file");
+      };
+      reader.readAsText(file);
+    } else if (fileName.endsWith('.pdf') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+      // Binary documents - show helpful message
+      toast.error(
+        "PDF and Word documents aren't directly supported yet. Please copy and paste the text content instead.",
+        { duration: 5000 }
+      );
+    } else {
+      // Try to read as text anyway
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        if (content.trim()) {
+          setText(content);
+          toast.success("File loaded successfully");
+        } else {
+          toast.error("Unable to read this file format. Please paste text directly.");
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Unable to read this file format. Please paste text directly.");
+      };
+      reader.readAsText(file);
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      if (content.trim()) {
-        setText(content);
-        toast.success("File loaded successfully");
-      } else {
-        toast.error("File appears to be empty");
-      }
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read file");
-    };
-    reader.readAsText(file);
   };
 
   const handleAnalyze = async () => {
@@ -135,13 +158,13 @@ const Index = () => {
                       Upload a file
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Supports .txt files
+                      Supports .txt, .md, .rtf and other text files
                     </p>
                   </div>
                   <input
                     id="file-upload"
                     type="file"
-                    accept=".txt"
+                    accept=".txt,.md,.rtf,.pdf,.doc,.docx"
                     onChange={handleFileUpload}
                     className="hidden"
                   />

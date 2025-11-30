@@ -20,6 +20,22 @@ serve(async (req) => {
       );
     }
 
+    // Check if text looks like binary/PDF data
+    if (text.startsWith('%PDF') || text.includes('\u0000') || text.includes('endobj')) {
+      return new Response(
+        JSON.stringify({ error: 'Binary or PDF files cannot be analyzed. Please use plain text files.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Limit text length to prevent excessive API costs
+    const maxLength = 50000; // ~50k characters
+    const analysisText = text.length > maxLength ? text.substring(0, maxLength) : text;
+    
+    if (text.length > maxLength) {
+      console.log(`Text truncated from ${text.length} to ${maxLength} characters`);
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       console.error('LOVABLE_API_KEY not configured');
@@ -71,7 +87,7 @@ Be strict in your analysis. Most AI-generated content should score below 40 on p
           },
           {
             role: 'user',
-            content: `Analyze this text for AI-generated fake news:\n\n${text}`
+            content: `Analyze this text for AI-generated fake news:\n\n${analysisText}`
           }
         ],
         temperature: 0.3,
@@ -110,12 +126,33 @@ Be strict in your analysis. Most AI-generated content should score below 40 on p
     // Parse the JSON response from AI
     let analysisResult;
     try {
-      // Extract JSON from markdown code blocks if present
-      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
-      const jsonString = jsonMatch ? jsonMatch[1] : content;
-      analysisResult = JSON.parse(jsonString.trim());
+      let jsonString = content.trim();
+      
+      // Remove markdown code blocks if present
+      // Handle various markdown formats: ```json\n...\n```, ```\n...\n```, or plain JSON
+      if (jsonString.startsWith('```')) {
+        // Find the first newline after opening backticks
+        const firstNewline = jsonString.indexOf('\n');
+        // Find the last occurrence of closing backticks
+        const lastBackticks = jsonString.lastIndexOf('```');
+        
+        if (firstNewline !== -1 && lastBackticks > firstNewline) {
+          jsonString = jsonString.substring(firstNewline + 1, lastBackticks).trim();
+        }
+      }
+      
+      analysisResult = JSON.parse(jsonString);
+      
+      // Validate required fields
+      if (typeof analysisResult.perplexityScore !== 'number' ||
+          typeof analysisResult.semanticScore !== 'number' ||
+          typeof analysisResult.watermarkScore !== 'number' ||
+          typeof analysisResult.factualScore !== 'number') {
+        throw new Error('Missing required score fields');
+      }
     } catch (parseError) {
       console.error('Failed to parse AI response:', content);
+      console.error('Parse error:', parseError);
       throw new Error('Invalid response format from AI');
     }
 

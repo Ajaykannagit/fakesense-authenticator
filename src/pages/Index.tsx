@@ -16,16 +16,23 @@ const Index = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.txt') && !file.name.endsWith('.pdf')) {
-      toast.error("Please upload a .txt or .pdf file");
+    if (!file.name.endsWith('.txt')) {
+      toast.error("Currently only .txt files are supported. PDF support coming soon!");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
-      setText(content);
-      toast.success("File loaded successfully");
+      if (content.trim()) {
+        setText(content);
+        toast.success("File loaded successfully");
+      } else {
+        toast.error("File appears to be empty");
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read file");
     };
     reader.readAsText(file);
   };
@@ -128,13 +135,13 @@ const Index = () => {
                       Upload a file
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Supports .txt and .pdf files
+                      Supports .txt files
                     </p>
                   </div>
                   <input
                     id="file-upload"
                     type="file"
-                    accept=".txt,.pdf"
+                    accept=".txt"
                     onChange={handleFileUpload}
                     className="hidden"
                   />

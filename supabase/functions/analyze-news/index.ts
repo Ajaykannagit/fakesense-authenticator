@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text, headline } = await req.json();
     
     if (!text || typeof text !== 'string') {
       return new Response(
@@ -46,6 +46,20 @@ serve(async (req) => {
     }
 
     console.log('Analyzing text of length:', text.length);
+    if (headline) {
+      console.log('Analyzing with headline:', headline.substring(0, 50));
+    }
+
+    const headlinePrompt = headline 
+      ? `\n\nHeadline-Body Consistency Check:
+Additionally, analyze the semantic similarity between the provided headline and article body. If they are semantically inconsistent (e.g., headline promises content not delivered in body), include a "headlineConsistency" field with:
+{
+  "score": <number 0-100, where 100 = perfect match, 0 = completely unrelated>,
+  "explanation": "Brief explanation of consistency or mismatch"
+}
+
+Headline: "${headline}"`
+      : '';
 
     // Perform AI analysis using Lovable AI Gateway
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -71,7 +85,9 @@ Your task is to analyze the provided text and return four specific detection sco
 
 4. WRITING STYLE SCORE (0-100): Measure lexical diversity (unique word ratio) and entropy (information density). Human writing shows higher variance. Score 0 = low diversity/entropy (AI-like), 100 = high diversity/entropy (human-like).
 
-Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores:
+Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores.
+
+${headline ? 'HEADLINE CONSISTENCY CHECK: If a headline is provided, analyze semantic similarity between headline and body. Return "headlineConsistency" object with score (0-100) and explanation.' : ''}
 
 Return ONLY a JSON object in this exact format:
 {
@@ -83,7 +99,7 @@ Return ONLY a JSON object in this exact format:
     {"text": "sentence1", "riskScore": <number 0-100>},
     {"text": "sentence2", "riskScore": <number 0-100>}
   ],
-  "explanation": "<brief 2-3 sentence summary covering all four detection signals>"
+  "explanation": "<3-4 sentence summary mentioning: repetition patterns (with examples), unnatural phrasing (specific), incoherent transitions (specific), logical contradictions (specific)>"${headline ? ',\n  "headlineConsistency": {"score": <number 0-100>, "explanation": "..."}' : ''}
 }
 
 Risk Score Guidelines:
@@ -91,7 +107,7 @@ Risk Score Guidelines:
 - 41-70: Medium risk (yellow) - Some concerning indicators
 - 71-100: High risk (red) - Strong AI/manipulation signals
 
-Be strict in your analysis. Most AI-generated content should score below 35 on perplexity and watermark scores.`
+Be strict in your analysis. Most AI-generated content should score below 35 on perplexity and watermark scores.${headlinePrompt}`
           },
           {
             role: 'user',
@@ -179,7 +195,8 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       watermarkScore: analysisResult.watermarkScore,
       writingStyleScore: analysisResult.writingStyleScore,
       suspiciousSentences: analysisResult.suspiciousSentences || [],
-      explanation: analysisResult.explanation || 'Multi-signal analysis complete.'
+      explanation: analysisResult.explanation || 'Multi-signal analysis complete.',
+      ...(analysisResult.headlineConsistency && { headlineConsistency: analysisResult.headlineConsistency })
     };
 
     console.log('Analysis complete, overall score:', overallScore);

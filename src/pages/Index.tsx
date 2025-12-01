@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
+  const [headline, setHeadline] = useState("");
   const [text, setText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
@@ -69,12 +70,12 @@ const Index = () => {
     setIsAnalyzing(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-news', {
-        body: { text }
+        body: { text, headline: headline.trim() || null }
       });
 
       if (error) throw error;
 
-      navigate('/results', { state: { results: data, originalText: text } });
+      navigate('/results', { state: { results: data, originalText: text, headline: headline.trim() || null } });
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error("Failed to analyze text. Please try again.");
@@ -134,7 +135,19 @@ const Index = () => {
             <div className="space-y-6">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Paste news article or text
+                  Headline (optional)
+                </label>
+                <Textarea
+                  placeholder="Enter the article headline for consistency checking..."
+                  value={headline}
+                  onChange={(e) => setHeadline(e.target.value)}
+                  className="min-h-[60px] bg-background/50 border-border/50 focus:border-primary/50"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Article text
                 </label>
                 <Textarea
                   placeholder="Enter the news article text you want to analyze..."

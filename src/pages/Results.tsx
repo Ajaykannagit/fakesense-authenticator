@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScoreRing } from "@/components/ScoreRing";
 import { ScoreCard } from "@/components/ScoreCard";
-import { ArrowLeft, AlertTriangle, CheckCircle2, Info, Brain } from "lucide-react";
+import { SuspiciousSentence } from "@/components/SuspiciousSentence";
+import { ArrowLeft, AlertTriangle, CheckCircle2, Activity, Brain, Fingerprint } from "lucide-react";
 import { useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Results = () => {
   const location = useLocation();
@@ -19,7 +21,7 @@ const Results = () => {
 
   if (!results) return null;
 
-  const { overallScore, perplexityScore, semanticScore, watermarkScore, factualScore, suspiciousSentences, explanation } = results;
+  const { overallScore, perplexityScore, semanticScore, watermarkScore, writingStyleScore, suspiciousSentences, explanation } = results;
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,54 +50,61 @@ const Results = () => {
         {/* Detection Scores Grid */}
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           <ScoreCard
-            title="Perplexity Analysis"
+            title="Perplexity Score"
             score={perplexityScore}
-            description="Measures text predictability patterns typical of AI-generated content"
+            description="GPT-2 model analysis of text predictability and token patterns"
             icon={<Brain className="w-5 h-5" />}
           />
           <ScoreCard
-            title="Semantic Consistency"
+            title="Semantic Drift Score"
             score={semanticScore}
-            description="Evaluates logical flow and coherence between article sections"
+            description="Sentence-embedding cosine similarity between consecutive sections"
             icon={<CheckCircle2 className="w-5 h-5" />}
           />
           <ScoreCard
-            title="Watermark Detection"
+            title="Watermark Fingerprint"
             score={watermarkScore}
-            description="Identifies neural fingerprints and repetition patterns"
-            icon={<AlertTriangle className="w-5 h-5" />}
+            description="Burstiness patterns and token repetition analysis"
+            icon={<Fingerprint className="w-5 h-5" />}
           />
           <ScoreCard
-            title="Factual Verification"
-            score={factualScore}
-            description="Cross-references claims against verified knowledge sources"
-            icon={<Info className="w-5 h-5" />}
+            title="Writing Style Score"
+            score={writingStyleScore}
+            description="Lexical diversity and entropy measurement"
+            icon={<Activity className="w-5 h-5" />}
           />
         </div>
 
         {/* Explanation */}
         <Card className="p-6 bg-card/50 backdrop-blur border-border/50 mb-8">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Info className="w-5 h-5 text-primary" />
-            Analysis Summary
+            <Brain className="w-5 h-5 text-primary" />
+            Multi-Signal Analysis Summary
           </h2>
           <p className="text-muted-foreground leading-relaxed">{explanation}</p>
         </Card>
 
-        {/* Suspicious Sentences */}
+        {/* Suspicious Sentences with Color Coding */}
         {suspiciousSentences && suspiciousSentences.length > 0 && (
           <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-warning" />
-              Flagged Content
+              Sentence-Level Risk Analysis
             </h2>
-            <div className="space-y-4">
-              {suspiciousSentences.map((sentence: string, index: number) => (
-                <div key={index} className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
-                  <p className="text-sm text-foreground">{sentence}</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              High-risk sentences show strong AI/manipulation signals. Medium-risk have some concerns. Safe sentences appear natural.
+            </p>
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-3">
+                {suspiciousSentences.map((sentence: any, index: number) => (
+                  <SuspiciousSentence
+                    key={index}
+                    text={typeof sentence === 'string' ? sentence : sentence.text}
+                    riskScore={typeof sentence === 'string' ? 50 : sentence.riskScore}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
           </Card>
         )}
 

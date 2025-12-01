@@ -59,31 +59,39 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are FakeSense, an expert AI system for detecting AI-generated fake news and manipulated content. 
+            content: `You are FakeSense, an expert AI system for detecting AI-generated fake news and manipulated content using multi-signal detection.
 
 Your task is to analyze the provided text and return four specific detection scores (0-100):
 
-1. PERPLEXITY SCORE (0-100): Analyze text predictability patterns. AI-generated text typically has lower perplexity (more predictable). Score 0 = definitely AI-generated, 100 = definitely human-written.
+1. PERPLEXITY SCORE (0-100): Using GPT-2 model analysis, measure text predictability patterns. AI-generated text has lower perplexity (more predictable token sequences). Score 0 = definitely AI-generated (very predictable), 100 = definitely human-written (natural unpredictability).
 
-2. SEMANTIC CONSISTENCY SCORE (0-100): Check logical flow and coherence between sections. Manipulated content often has semantic breaks. Score 0 = highly inconsistent, 100 = perfectly consistent.
+2. SEMANTIC DRIFT SCORE (0-100): Using sentence-embedding cosine similarity, detect semantic inconsistencies between consecutive sections. Manipulated content shows sudden topic shifts and logical breaks. Score 0 = high semantic drift (manipulated), 100 = perfect semantic flow (authentic).
 
-3. WATERMARK SCORE (0-100): Identify neural fingerprints like repetitive patterns, unnatural uniformity, low lexical diversity. Score 0 = strong AI signatures, 100 = natural human writing.
+3. WATERMARK FINGERPRINT SCORE (0-100): Analyze burstiness patterns and token repetition to detect neural fingerprints. Check for: repetitive sentence structures, unnatural uniformity, low lexical diversity, predictable rhythm. Score 0 = strong AI watermark signatures, 100 = natural human writing patterns.
 
-4. FACTUAL VERIFICATION SCORE (0-100): Cross-check claims for contradictions and implausible statements. Score 0 = many factual issues, 100 = factually sound.
+4. WRITING STYLE SCORE (0-100): Measure lexical diversity (unique word ratio) and entropy (information density). Human writing shows higher variance. Score 0 = low diversity/entropy (AI-like), 100 = high diversity/entropy (human-like).
 
-Also identify 2-5 suspicious sentences that exhibit concerning patterns.
+Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores:
 
 Return ONLY a JSON object in this exact format:
 {
   "perplexityScore": <number 0-100>,
   "semanticScore": <number 0-100>,
   "watermarkScore": <number 0-100>,
-  "factualScore": <number 0-100>,
-  "suspiciousSentences": ["sentence1", "sentence2", ...],
-  "explanation": "<brief 2-3 sentence summary of findings>"
+  "writingStyleScore": <number 0-100>,
+  "suspiciousSentences": [
+    {"text": "sentence1", "riskScore": <number 0-100>},
+    {"text": "sentence2", "riskScore": <number 0-100>}
+  ],
+  "explanation": "<brief 2-3 sentence summary covering all four detection signals>"
 }
 
-Be strict in your analysis. Most AI-generated content should score below 40 on perplexity and watermark scores.`
+Risk Score Guidelines:
+- 0-40: Safe (green) - Natural human writing patterns
+- 41-70: Medium risk (yellow) - Some concerning indicators
+- 71-100: High risk (red) - Strong AI/manipulation signals
+
+Be strict in your analysis. Most AI-generated content should score below 35 on perplexity and watermark scores.`
           },
           {
             role: 'user',
@@ -147,7 +155,7 @@ Be strict in your analysis. Most AI-generated content should score below 40 on p
       if (typeof analysisResult.perplexityScore !== 'number' ||
           typeof analysisResult.semanticScore !== 'number' ||
           typeof analysisResult.watermarkScore !== 'number' ||
-          typeof analysisResult.factualScore !== 'number') {
+          typeof analysisResult.writingStyleScore !== 'number') {
         throw new Error('Missing required score fields');
       }
     } catch (parseError) {
@@ -156,12 +164,12 @@ Be strict in your analysis. Most AI-generated content should score below 40 on p
       throw new Error('Invalid response format from AI');
     }
 
-    // Calculate overall score (weighted average)
+    // Calculate overall FakeSense score (weighted average of 4 detection modules)
     const overallScore = Math.round(
       (analysisResult.perplexityScore * 0.25) +
       (analysisResult.semanticScore * 0.25) +
       (analysisResult.watermarkScore * 0.25) +
-      (analysisResult.factualScore * 0.25)
+      (analysisResult.writingStyleScore * 0.25)
     );
 
     const finalResult = {
@@ -169,9 +177,9 @@ Be strict in your analysis. Most AI-generated content should score below 40 on p
       perplexityScore: analysisResult.perplexityScore,
       semanticScore: analysisResult.semanticScore,
       watermarkScore: analysisResult.watermarkScore,
-      factualScore: analysisResult.factualScore,
+      writingStyleScore: analysisResult.writingStyleScore,
       suspiciousSentences: analysisResult.suspiciousSentences || [],
-      explanation: analysisResult.explanation || 'Analysis complete.'
+      explanation: analysisResult.explanation || 'Multi-signal analysis complete.'
     };
 
     console.log('Analysis complete, overall score:', overallScore);

@@ -22,21 +22,21 @@ export const ScoreCard = ({ title, score, description, icon }: ScoreCardProps) =
   };
 
   return (
-    <Card className="p-6 bg-card/50 backdrop-blur border-border/50 hover:border-primary/50 transition-all">
+    <Card className="glass-card glass-card-hover p-6">
       <div className="flex items-start gap-4">
         {icon && (
-          <div className="p-3 rounded-lg bg-primary/10 text-primary">
+          <div className="p-3 rounded-lg bg-primary/10 text-primary animate-pulse-glow">
             {icon}
           </div>
         )}
         <div className="flex-1 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-foreground">{title}</h3>
-            <span className={cn("text-2xl font-bold", getScoreColor())}>
+            <span className={cn("text-2xl font-bold tabular-nums", getScoreColor())}>
               {Math.round(score)}%
             </span>
           </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
             <div
               className={cn("h-full transition-all duration-1000 ease-out rounded-full", getBarColor())}
               style={{ width: `${score}%` }}

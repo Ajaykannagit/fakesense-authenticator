@@ -3,9 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Upload, Sparkles, Shield, Info } from "lucide-react";
+import { Upload, Sparkles, Shield, Info, History } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+const MAX_TEXT_LENGTH = 50000;
 
 const Index = () => {
   const [headline, setHeadline] = useState("");
@@ -13,72 +20,114 @@ const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Handle different file types
     const fileName = file.name.toLowerCase();
-    
-    if (fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.rtf')) {
-      // Text-based files - read directly
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        if (content.trim()) {
-          setText(content);
-          toast.success("File loaded successfully");
-        } else {
-          toast.error("File appears to be empty");
+    toast.loading("Processing file...", { id: "file-upload" });
+
+    try {
+      let extractedText = "";
+
+      if (fileName.endsWith('.pdf')) {
+        // Extract PDF text
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const textParts: string[] = [];
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+          textParts.push(pageText);
         }
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read file");
-      };
-      reader.readAsText(file);
-    } else if (fileName.endsWith('.pdf') || fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
-      // Binary documents - show helpful message
+
+        extractedText = textParts.join('\n\n');
+      } else if (fileName.endsWith('.docx')) {
+        // Extract Word document text
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        extractedText = result.value;
+      } else if (fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.rtf')) {
+        // Read text files directly
+        extractedText = await file.text();
+      } else {
+        // Try to read as text anyway
+        extractedText = await file.text();
+      }
+
+      if (!extractedText.trim()) {
+        toast.error("File appears to be empty", { id: "file-upload" });
+        return;
+      }
+
+      if (extractedText.length > MAX_TEXT_LENGTH) {
+        toast.warning(
+          `Text is very long (${extractedText.length.toLocaleString()} chars). Using first ${MAX_TEXT_LENGTH.toLocaleString()} characters.`,
+          { id: "file-upload", duration: 5000 }
+        );
+        extractedText = extractedText.substring(0, MAX_TEXT_LENGTH);
+      }
+
+      setText(extractedText);
+      toast.success("File loaded successfully", { id: "file-upload" });
+    } catch (error) {
+      console.error("File extraction error:", error);
       toast.error(
-        "PDF and Word documents aren't directly supported yet. Please copy and paste the text content instead.",
-        { duration: 5000 }
+        "Failed to extract text from file. Please copy and paste the text manually.",
+        { id: "file-upload", duration: 5000 }
       );
-    } else {
-      // Try to read as text anyway
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        if (content.trim()) {
-          setText(content);
-          toast.success("File loaded successfully");
-        } else {
-          toast.error("Unable to read this file format. Please paste text directly.");
-        }
-      };
-      reader.onerror = () => {
-        toast.error("Unable to read this file format. Please paste text directly.");
-      };
-      reader.readAsText(file);
     }
   };
 
   const handleAnalyze = async () => {
+    // Validation
     if (!text.trim()) {
       toast.error("Please enter some text to analyze");
       return;
     }
 
+    if (text.length < 50) {
+      toast.error("Text is too short. Please provide at least 50 characters for analysis.");
+      return;
+    }
+
+    if (text.length > MAX_TEXT_LENGTH) {
+      toast.warning(
+        `Text is very long (${text.length.toLocaleString()} chars). Using first ${MAX_TEXT_LENGTH.toLocaleString()} characters.`,
+        { duration: 5000 }
+      );
+    }
+
     setIsAnalyzing(true);
     try {
+      const textToAnalyze = text.length > MAX_TEXT_LENGTH 
+        ? text.substring(0, MAX_TEXT_LENGTH)
+        : text;
+
       const { data, error } = await supabase.functions.invoke('analyze-news', {
-        body: { text, headline: headline.trim() || null }
+        body: { text: textToAnalyze, headline: headline.trim() || null }
       });
 
       if (error) throw error;
 
-      navigate('/results', { state: { results: data, originalText: text, headline: headline.trim() || null } });
+      if (!data) {
+        throw new Error("No data received from analysis");
+      }
+
+      navigate('/results', { 
+        state: { 
+          results: data, 
+          originalText: textToAnalyze, 
+          headline: headline.trim() || null 
+        } 
+      });
     } catch (error) {
       console.error('Analysis error:', error);
-      toast.error("Failed to analyze text. Please try again.");
+      toast.error("Failed to analyze text. The AI model may be temporarily unavailable. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -104,10 +153,16 @@ const Index = () => {
                 FakeSense
               </h1>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/about')}>
-              <Info className="w-4 h-4 mr-2" />
-              About
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/history')}>
+                <History className="w-4 h-4 mr-2" />
+                History
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/about')}>
+                <Info className="w-4 h-4 mr-2" />
+                About
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -171,7 +226,7 @@ const Index = () => {
                       Upload a file
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Supports .txt, .md, .rtf and other text files
+                      Supports PDF, Word (.docx), and text files (.txt, .md, .rtf)
                     </p>
                   </div>
                   <input

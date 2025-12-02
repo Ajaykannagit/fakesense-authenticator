@@ -87,6 +87,10 @@ Your task is to analyze the provided text and return four specific detection sco
 
 Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores.
 
+AI-ORIGIN PROBABILITY: Using zero-shot classification and entropy-based heuristics, estimate the probability that this text is AI-generated vs human-written. Consider all four detection scores, linguistic patterns, and stylistic markers. Return two values that sum to 100:
+- "aiOriginProbability": <number 0-100> - likelihood text is AI-generated
+- "humanOriginProbability": <number 0-100> - likelihood text is human-written
+
 ${headline ? 'HEADLINE CONSISTENCY CHECK: If a headline is provided, analyze semantic similarity between headline and body. Return "headlineConsistency" object with score (0-100) and explanation.' : ''}
 
 Return ONLY a JSON object in this exact format:
@@ -95,6 +99,8 @@ Return ONLY a JSON object in this exact format:
   "semanticScore": <number 0-100>,
   "watermarkScore": <number 0-100>,
   "writingStyleScore": <number 0-100>,
+  "aiOriginProbability": <number 0-100>,
+  "humanOriginProbability": <number 0-100>,
   "suspiciousSentences": [
     {"text": "sentence1", "riskScore": <number 0-100>},
     {"text": "sentence2", "riskScore": <number 0-100>}
@@ -171,7 +177,9 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       if (typeof analysisResult.perplexityScore !== 'number' ||
           typeof analysisResult.semanticScore !== 'number' ||
           typeof analysisResult.watermarkScore !== 'number' ||
-          typeof analysisResult.writingStyleScore !== 'number') {
+          typeof analysisResult.writingStyleScore !== 'number' ||
+          typeof analysisResult.aiOriginProbability !== 'number' ||
+          typeof analysisResult.humanOriginProbability !== 'number') {
         throw new Error('Missing required score fields');
       }
     } catch (parseError) {
@@ -194,6 +202,8 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       semanticScore: analysisResult.semanticScore,
       watermarkScore: analysisResult.watermarkScore,
       writingStyleScore: analysisResult.writingStyleScore,
+      aiOriginProbability: analysisResult.aiOriginProbability,
+      humanOriginProbability: analysisResult.humanOriginProbability,
       suspiciousSentences: analysisResult.suspiciousSentences || [],
       explanation: analysisResult.explanation || 'Multi-signal analysis complete.',
       ...(analysisResult.headlineConsistency && { headlineConsistency: analysisResult.headlineConsistency })

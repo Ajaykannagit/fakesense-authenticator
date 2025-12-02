@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScoreRing } from "@/components/ScoreRing";
 import { ScoreCard } from "@/components/ScoreCard";
 import { SuspiciousSentence } from "@/components/SuspiciousSentence";
+import { AiOriginChart } from "@/components/AiOriginChart";
 import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
@@ -58,6 +59,8 @@ const Results = () => {
     semanticScore,
     watermarkScore,
     writingStyleScore,
+    aiOriginProbability,
+    humanOriginProbability,
     suspiciousSentences,
     explanation,
     headlineConsistency
@@ -103,6 +106,18 @@ const Results = () => {
       yPos += 6;
       doc.text(`Writing Style Score: ${Math.round(writingStyleScore)}%`, margin + 5, yPos);
       yPos += 10;
+
+      // AI-Origin Probability
+      if (aiOriginProbability !== undefined && humanOriginProbability !== undefined) {
+        doc.setFont("helvetica", "bold");
+        doc.text("AI-Origin Probability:", margin + 5, yPos);
+        yPos += 6;
+        doc.setFont("helvetica", "normal");
+        doc.text(`AI-Generated: ${Math.round(aiOriginProbability)}%`, margin + 10, yPos);
+        yPos += 6;
+        doc.text(`Human-Written: ${Math.round(humanOriginProbability)}%`, margin + 10, yPos);
+        yPos += 10;
+      }
 
       // Headline Consistency
       if (headlineConsistency && headline) {
@@ -230,6 +245,14 @@ const Results = () => {
             icon={<FileText />}
           />
         </div>
+
+        {/* AI-Origin Probability Chart */}
+        {aiOriginProbability !== undefined && humanOriginProbability !== undefined && (
+          <AiOriginChart 
+            aiOriginProbability={aiOriginProbability}
+            humanOriginProbability={humanOriginProbability}
+          />
+        )}
 
         {/* Headline Consistency */}
         {headlineConsistency && headline && (

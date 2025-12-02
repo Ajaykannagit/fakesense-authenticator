@@ -24,8 +24,31 @@ const Results = () => {
   useEffect(() => {
     if (!results) {
       navigate('/');
+      return;
     }
-  }, [results, navigate]);
+
+    // Save to history
+    try {
+      const historyItem = {
+        id: Date.now().toString(),
+        score: results.overallScore,
+        date: new Date().toISOString(),
+        headline: headline || null,
+        textExtract: originalText?.substring(0, 200) || "",
+        fullData: { results, originalText, headline }
+      };
+
+      const stored = localStorage.getItem("fakesense-history");
+      let history = stored ? JSON.parse(stored) : [];
+      
+      // Keep only last 10 items
+      history = [historyItem, ...history].slice(0, 10);
+      
+      localStorage.setItem("fakesense-history", JSON.stringify(history));
+    } catch (error) {
+      console.error("Failed to save to history:", error);
+    }
+  }, [results, navigate, originalText, headline]);
 
   if (!results) return null;
 
@@ -168,9 +191,11 @@ const Results = () => {
 
       <main className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Overall Score Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold mb-6">Analysis Results</h1>
-          <Card className="inline-block p-8 bg-card/50 backdrop-blur-xl border-border/50 shadow-glow">
+        <div className="text-center mb-12 animate-fade-in">
+          <h1 className="text-3xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
+            Analysis Results
+          </h1>
+          <Card className="glass-card inline-block p-8">
             <ScoreRing score={overallScore} size={160} strokeWidth={12} />
             <p className="text-sm text-muted-foreground mt-4 max-w-md">
               FakeSense Score combines four detection algorithms to assess content authenticity
@@ -179,7 +204,7 @@ const Results = () => {
         </div>
 
         {/* Detection Scores Grid */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 gap-6 mb-12 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <ScoreCard
             title="Perplexity Score"
             score={perplexityScore}
@@ -208,7 +233,7 @@ const Results = () => {
 
         {/* Headline Consistency */}
         {headlineConsistency && headline && (
-          <Card className="p-6 bg-card/50 backdrop-blur border-border/50 mb-8">
+          <Card className="glass-card glass-card-hover p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-lg bg-accent/10 text-accent">
                 <Target className="w-6 h-6" />
@@ -231,7 +256,7 @@ const Results = () => {
         )}
 
         {/* Explanation Panel */}
-        <Card className="p-6 bg-card/50 backdrop-blur border-border/50 mb-8">
+        <Card className="glass-card p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Detailed Analysis Explanation</h3>
@@ -264,7 +289,7 @@ const Results = () => {
 
         {/* Suspicious Sentences with Color Coding */}
         {suspiciousSentences && suspiciousSentences.length > 0 && (
-          <Card className="p-6 bg-card/50 backdrop-blur border-border/50 mb-8">
+          <Card className="glass-card p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <h2 className="text-xl font-semibold mb-4">Sentence-Level Risk Analysis</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Individual sentences analyzed for linguistic anomalies and suspicious patterns.
@@ -284,7 +309,7 @@ const Results = () => {
         )}
 
         {/* Original Text Preview */}
-        <Card className="p-6 bg-card/30 backdrop-blur border-border/30 mt-8">
+        <Card className="glass-card p-6 mt-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Original Text</h3>
           <p className="text-sm text-foreground/80 line-clamp-6">{originalText}</p>
         </Card>

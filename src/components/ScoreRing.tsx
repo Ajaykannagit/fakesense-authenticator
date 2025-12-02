@@ -41,9 +41,22 @@ export const ScoreRing = ({ score, size = 120, strokeWidth = 8 }: ScoreRingProps
   const risk = getRiskLevel();
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 animate-scale-in">
       <div className="relative" style={{ width: size, height: size }}>
-        <svg className="transform -rotate-90" width={size} height={size}>
+        <svg className="transform -rotate-90 animate-pulse-glow" width={size} height={size}>
+          <defs>
+            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={getColor()} stopOpacity="1" />
+              <stop offset="100%" stopColor={getColor()} stopOpacity="0.6" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -51,27 +64,28 @@ export const ScoreRing = ({ score, size = 120, strokeWidth = 8 }: ScoreRingProps
             stroke="hsl(var(--muted))"
             strokeWidth={strokeWidth}
             fill="none"
+            opacity="0.2"
           />
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={getColor()}
+            stroke="url(#scoreGradient)"
             strokeWidth={strokeWidth}
             fill="none"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
+            filter="url(#glow)"
             className="transition-all duration-1000 ease-out"
-            style={{ filter: `drop-shadow(0 0 8px ${getColor()})` }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold">{Math.round(displayScore)}%</span>
-          <span className="text-xs text-muted-foreground">Authenticity</span>
+          <span className="text-4xl font-bold tabular-nums">{Math.round(displayScore)}%</span>
+          <span className="text-xs text-muted-foreground tracking-wide">Authenticity</span>
         </div>
       </div>
-      <div className={`text-sm font-semibold ${risk.color}`}>
+      <div className={`text-sm font-semibold px-4 py-1 rounded-full ${risk.color} bg-opacity-10`}>
         {risk.text}
       </div>
     </div>

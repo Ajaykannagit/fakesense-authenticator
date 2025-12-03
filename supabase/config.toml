@@ -2,3 +2,6 @@ project_id = "xqgdwqvqgghpuvmlrwvh"
 
 [functions.analyze-news]
 verify_jwt = false
+
+[functions.fact-check]
+verify_jwt = false

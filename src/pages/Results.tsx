@@ -7,26 +7,53 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { ScoreCard } from "@/components/ScoreCard";
 import { SuspiciousSentence } from "@/components/SuspiciousSentence";
 import { AiOriginChart } from "@/components/AiOriginChart";
-import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target } from "lucide-react";
+import { StyleSignatureChart } from "@/components/StyleSignatureChart";
+import { FactCheckPanel } from "@/components/FactCheckPanel";
+import { SelfLearningBadge } from "@/components/SelfLearningBadge";
+import { savePattern, matchPatterns, PatternMatchResult } from "@/lib/selfLearning";
+import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
+interface FactCheckResult {
+  factMatchScore: number;
+  claims: Array<{
+    text: string;
+    status: "verified" | "suspicious" | "unverified";
+    matchScore?: number;
+    source?: string;
+    explanation?: string;
+  }>;
+  contradictions: string[];
+}
+
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { results, originalText, headline } = location.state || {};
   const [isExplanationOpen, setIsExplanationOpen] = useState(true);
+  const [factCheckResult, setFactCheckResult] = useState<FactCheckResult | null>(null);
+  const [isFactChecking, setIsFactChecking] = useState(false);
+  const [patternMatch, setPatternMatch] = useState<PatternMatchResult | null>(null);
 
   useEffect(() => {
     if (!results) {
       navigate('/');
       return;
     }
+
+    // Self-Learning: Check for pattern matches first
+    const match = matchPatterns(results, originalText);
+    setPatternMatch(match);
+
+    // Self-Learning: Save current analysis pattern
+    savePattern(results, originalText);
 
     // Save to history
     try {
@@ -41,15 +68,38 @@ const Results = () => {
 
       const stored = localStorage.getItem("fakesense-history");
       let history = stored ? JSON.parse(stored) : [];
-      
-      // Keep only last 10 items
       history = [historyItem, ...history].slice(0, 10);
-      
       localStorage.setItem("fakesense-history", JSON.stringify(history));
     } catch (error) {
       console.error("Failed to save to history:", error);
     }
+
+    // Fact Check: Call the fact-check edge function if claims exist
+    if (results.extractedClaims && results.extractedClaims.length > 0) {
+      performFactCheck(results.extractedClaims);
+    }
   }, [results, navigate, originalText, headline]);
+
+  const performFactCheck = async (claims: string[]) => {
+    setIsFactChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fact-check', {
+        body: { claims }
+      });
+
+      if (error) {
+        console.error('Fact check error:', error);
+        toast.error('Fact checking unavailable');
+        return;
+      }
+
+      setFactCheckResult(data);
+    } catch (error) {
+      console.error('Fact check failed:', error);
+    } finally {
+      setIsFactChecking(false);
+    }
+  };
 
   if (!results) return null;
 
@@ -61,6 +111,7 @@ const Results = () => {
     writingStyleScore,
     aiOriginProbability,
     humanOriginProbability,
+    styleSignature,
     suspiciousSentences,
     explanation,
     headlineConsistency
@@ -116,6 +167,29 @@ const Results = () => {
         doc.text(`AI-Generated: ${Math.round(aiOriginProbability)}%`, margin + 10, yPos);
         yPos += 6;
         doc.text(`Human-Written: ${Math.round(humanOriginProbability)}%`, margin + 10, yPos);
+        yPos += 10;
+      }
+
+      // Style Signature
+      if (styleSignature) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Style Signature:", margin + 5, yPos);
+        yPos += 6;
+        doc.setFont("helvetica", "normal");
+        doc.text(`Sentence Rhythm: ${Math.round(styleSignature.sentenceRhythm)}%`, margin + 10, yPos);
+        yPos += 6;
+        doc.text(`Punctuation Freq: ${Math.round(styleSignature.punctuationFrequency)}%`, margin + 10, yPos);
+        yPos += 6;
+        doc.text(`Vocabulary Spread: ${Math.round(styleSignature.vocabularySpread)}%`, margin + 10, yPos);
+        yPos += 6;
+        doc.text(`Token Transitions: ${Math.round(styleSignature.tokenTransitions)}%`, margin + 10, yPos);
+        yPos += 10;
+      }
+
+      // Fact Check Score
+      if (factCheckResult) {
+        doc.setFont("helvetica", "bold");
+        doc.text(`Fact Match Score: ${Math.round(factCheckResult.factMatchScore)}%`, margin + 5, yPos);
         yPos += 10;
       }
 
@@ -205,6 +279,9 @@ const Results = () => {
       </header>
 
       <main className="container mx-auto px-4 py-12 max-w-6xl">
+        {/* Self-Learning Pattern Match Alert */}
+        <SelfLearningBadge patternMatch={patternMatch} />
+
         {/* Overall Score Section */}
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-3xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
@@ -253,6 +330,21 @@ const Results = () => {
             humanOriginProbability={humanOriginProbability}
           />
         )}
+
+        {/* Style Signature Radar Chart */}
+        {styleSignature && (
+          <StyleSignatureChart signature={styleSignature} />
+        )}
+
+        {/* Fact Check Panel */}
+        {isFactChecking ? (
+          <Card className="glass-card p-6 mb-8 animate-fade-in flex items-center justify-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span className="text-muted-foreground">Verifying claims against public sources...</span>
+          </Card>
+        ) : factCheckResult ? (
+          <FactCheckPanel factCheck={factCheckResult} />
+        ) : null}
 
         {/* Headline Consistency */}
         {headlineConsistency && headline && (

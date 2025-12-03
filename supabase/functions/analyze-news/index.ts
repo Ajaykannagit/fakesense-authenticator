@@ -85,6 +85,16 @@ Your task is to analyze the provided text and return four specific detection sco
 
 4. WRITING STYLE SCORE (0-100): Measure lexical diversity (unique word ratio) and entropy (information density). Human writing shows higher variance. Score 0 = low diversity/entropy (AI-like), 100 = high diversity/entropy (human-like).
 
+5. STYLE SIGNATURE FINGERPRINT: Compute a unique stylistic fingerprint based on:
+- "sentenceRhythm": <number 0-100> - Consistency of sentence lengths and cadence (0 = highly uniform/robotic, 100 = naturally varied)
+- "punctuationFrequency": <number 0-100> - Diversity in punctuation usage (0 = minimal/repetitive, 100 = rich variety)
+- "vocabularySpread": <number 0-100> - Range of vocabulary used (0 = limited/repetitive words, 100 = diverse vocabulary)
+- "tokenTransitions": <number 0-100> - Naturalness of word-to-word transitions (0 = predictable/template-like, 100 = organic flow)
+- "matchesAiPattern": <boolean> - true if the style matches typical AI-pattern clusters
+- "patternDescription": <string> - If matchesAiPattern is true, explain which AI patterns were detected
+
+6. CLAIM EXTRACTION: Extract 3-5 key factual claims from the text that can be verified. Return as an array of strings.
+
 Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores.
 
 AI-ORIGIN PROBABILITY: Using zero-shot classification and entropy-based heuristics, estimate the probability that this text is AI-generated vs human-written. Consider all four detection scores, linguistic patterns, and stylistic markers. Return two values that sum to 100:
@@ -101,6 +111,15 @@ Return ONLY a JSON object in this exact format:
   "writingStyleScore": <number 0-100>,
   "aiOriginProbability": <number 0-100>,
   "humanOriginProbability": <number 0-100>,
+  "styleSignature": {
+    "sentenceRhythm": <number 0-100>,
+    "punctuationFrequency": <number 0-100>,
+    "vocabularySpread": <number 0-100>,
+    "tokenTransitions": <number 0-100>,
+    "matchesAiPattern": <boolean>,
+    "patternDescription": "<string or null>"
+  },
+  "extractedClaims": ["claim1", "claim2", "claim3"],
   "suspiciousSentences": [
     {"text": "sentence1", "riskScore": <number 0-100>},
     {"text": "sentence2", "riskScore": <number 0-100>}
@@ -204,6 +223,8 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       writingStyleScore: analysisResult.writingStyleScore,
       aiOriginProbability: analysisResult.aiOriginProbability,
       humanOriginProbability: analysisResult.humanOriginProbability,
+      styleSignature: analysisResult.styleSignature || null,
+      extractedClaims: analysisResult.extractedClaims || [],
       suspiciousSentences: analysisResult.suspiciousSentences || [],
       explanation: analysisResult.explanation || 'Multi-signal analysis complete.',
       ...(analysisResult.headlineConsistency && { headlineConsistency: analysisResult.headlineConsistency })

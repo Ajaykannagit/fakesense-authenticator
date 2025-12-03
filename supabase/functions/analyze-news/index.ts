@@ -95,6 +95,12 @@ Your task is to analyze the provided text and return four specific detection sco
 
 6. CLAIM EXTRACTION: Extract 3-5 key factual claims from the text that can be verified. Return as an array of strings.
 
+7. PARAPHRASE ATTACK DETECTION: Detect if the text has been heavily paraphrased using AI tools to bypass detectors. Analyze:
+- "suspicionScore": <number 0-100> - Overall likelihood of AI-assisted paraphrasing (0 = natural writing, 100 = heavily paraphrased)
+- "embeddingVariance": <number 0-100> - Sentence embedding variance (0 = unnaturally uniform embeddings suggesting systematic rewriting, 100 = natural variance)
+- "synonymDensity": <number 0-100> - Unnatural synonym density (0 = normal word choices, 100 = excessive synonym substitution)
+- "explanation": <string> - Brief explanation of paraphrase indicators detected
+
 Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores.
 
 AI-ORIGIN PROBABILITY: Using zero-shot classification and entropy-based heuristics, estimate the probability that this text is AI-generated vs human-written. Consider all four detection scores, linguistic patterns, and stylistic markers. Return two values that sum to 100:
@@ -118,6 +124,12 @@ Return ONLY a JSON object in this exact format:
     "tokenTransitions": <number 0-100>,
     "matchesAiPattern": <boolean>,
     "patternDescription": "<string or null>"
+  },
+  "paraphraseAttack": {
+    "suspicionScore": <number 0-100>,
+    "embeddingVariance": <number 0-100>,
+    "synonymDensity": <number 0-100>,
+    "explanation": "<string>"
   },
   "extractedClaims": ["claim1", "claim2", "claim3"],
   "suspiciousSentences": [
@@ -224,6 +236,7 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       aiOriginProbability: analysisResult.aiOriginProbability,
       humanOriginProbability: analysisResult.humanOriginProbability,
       styleSignature: analysisResult.styleSignature || null,
+      paraphraseAttack: analysisResult.paraphraseAttack || null,
       extractedClaims: analysisResult.extractedClaims || [],
       suspiciousSentences: analysisResult.suspiciousSentences || [],
       explanation: analysisResult.explanation || 'Multi-signal analysis complete.',

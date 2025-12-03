@@ -10,6 +10,7 @@ import { AiOriginChart } from "@/components/AiOriginChart";
 import { StyleSignatureChart } from "@/components/StyleSignatureChart";
 import { FactCheckPanel } from "@/components/FactCheckPanel";
 import { SelfLearningBadge } from "@/components/SelfLearningBadge";
+import { ParaphraseAttackCard } from "@/components/ParaphraseAttackCard";
 import { savePattern, matchPatterns, PatternMatchResult } from "@/lib/selfLearning";
 import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
@@ -112,6 +113,7 @@ const Results = () => {
     aiOriginProbability,
     humanOriginProbability,
     styleSignature,
+    paraphraseAttack,
     suspiciousSentences,
     explanation,
     headlineConsistency
@@ -183,6 +185,18 @@ const Results = () => {
         doc.text(`Vocabulary Spread: ${Math.round(styleSignature.vocabularySpread)}%`, margin + 10, yPos);
         yPos += 6;
         doc.text(`Token Transitions: ${Math.round(styleSignature.tokenTransitions)}%`, margin + 10, yPos);
+        yPos += 10;
+      }
+
+      // Paraphrase Attack Detection
+      if (paraphraseAttack) {
+        doc.setFont("helvetica", "bold");
+        doc.text(`Paraphrase Attack Suspicion: ${Math.round(paraphraseAttack.suspicionScore)}%`, margin + 5, yPos);
+        yPos += 6;
+        doc.setFont("helvetica", "normal");
+        doc.text(`Embedding Variance: ${Math.round(paraphraseAttack.embeddingVariance)}%`, margin + 10, yPos);
+        yPos += 6;
+        doc.text(`Synonym Density: ${Math.round(paraphraseAttack.synonymDensity)}%`, margin + 10, yPos);
         yPos += 10;
       }
 
@@ -334,6 +348,11 @@ const Results = () => {
         {/* Style Signature Radar Chart */}
         {styleSignature && (
           <StyleSignatureChart signature={styleSignature} />
+        )}
+
+        {/* Paraphrase Attack Detection */}
+        {paraphraseAttack && (
+          <ParaphraseAttackCard attack={paraphraseAttack} />
         )}
 
         {/* Fact Check Panel */}

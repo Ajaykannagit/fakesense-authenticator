@@ -109,6 +109,15 @@ AI-ORIGIN PROBABILITY: Using zero-shot classification and entropy-based heuristi
 
 ${headline ? 'HEADLINE CONSISTENCY CHECK: If a headline is provided, analyze semantic similarity between headline and body. Return "headlineConsistency" object with score (0-100) and explanation.' : ''}
 
+8. DEEP EXPLANATION GENERATOR: Based on ALL scores and patterns detected, generate a comprehensive explanation of WHY the system flagged this article. The explanation must include:
+- "summary": <string> - 2-3 sentence overview of the key findings
+- "perplexityAnalysis": <string> - Explain low/high perplexity findings with specific examples from the text
+- "semanticDriftAnalysis": <string> - Describe any semantic inconsistencies, topic jumps, or logical breaks detected
+- "repetitionAnalysis": <string> - Detail repetition loops, phrase frequency anomalies, and predictable patterns found
+- "factualAnalysis": <string> - Note any factual mismatches, contradictions, or unverifiable claims
+- "stylisticAnalysis": <string> - Explain stylistic anomalies like uniform sentence structure, limited vocabulary, or unnatural rhythm
+- "conclusion": <string> - Final assessment synthesizing all signals into an actionable verdict
+
 Return ONLY a JSON object in this exact format:
 {
   "perplexityScore": <number 0-100>,
@@ -130,6 +139,15 @@ Return ONLY a JSON object in this exact format:
     "embeddingVariance": <number 0-100>,
     "synonymDensity": <number 0-100>,
     "explanation": "<string>"
+  },
+  "deepExplanation": {
+    "summary": "<string>",
+    "perplexityAnalysis": "<string>",
+    "semanticDriftAnalysis": "<string>",
+    "repetitionAnalysis": "<string>",
+    "factualAnalysis": "<string>",
+    "stylisticAnalysis": "<string>",
+    "conclusion": "<string>"
   },
   "extractedClaims": ["claim1", "claim2", "claim3"],
   "suspiciousSentences": [
@@ -237,6 +255,7 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       humanOriginProbability: analysisResult.humanOriginProbability,
       styleSignature: analysisResult.styleSignature || null,
       paraphraseAttack: analysisResult.paraphraseAttack || null,
+      deepExplanation: analysisResult.deepExplanation || null,
       extractedClaims: analysisResult.extractedClaims || [],
       suspiciousSentences: analysisResult.suspiciousSentences || [],
       explanation: analysisResult.explanation || 'Multi-signal analysis complete.',

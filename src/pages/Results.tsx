@@ -11,6 +11,7 @@ import { StyleSignatureChart } from "@/components/StyleSignatureChart";
 import { FactCheckPanel } from "@/components/FactCheckPanel";
 import { SelfLearningBadge } from "@/components/SelfLearningBadge";
 import { ParaphraseAttackCard } from "@/components/ParaphraseAttackCard";
+import { DeepExplanationPanel } from "@/components/DeepExplanationPanel";
 import { savePattern, matchPatterns, PatternMatchResult } from "@/lib/selfLearning";
 import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
@@ -114,6 +115,7 @@ const Results = () => {
     humanOriginProbability,
     styleSignature,
     paraphraseAttack,
+    deepExplanation,
     suspiciousSentences,
     explanation,
     headlineConsistency
@@ -218,14 +220,63 @@ const Results = () => {
         yPos += consistencyLines.length * 6 + 4;
       }
 
-      // Explanation
-      doc.setFont("helvetica", "bold");
-      doc.text("Analysis Explanation:", margin, yPos);
-      yPos += 8;
-      doc.setFont("helvetica", "normal");
-      const explanationLines = doc.splitTextToSize(explanation, maxWidth);
-      doc.text(explanationLines, margin, yPos);
-      yPos += explanationLines.length * 6 + 10;
+      // Deep Explanation
+      if (deepExplanation) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Deep Explanation:", margin, yPos);
+        yPos += 8;
+        doc.setFont("helvetica", "normal");
+        
+        // Summary
+        const summaryLines = doc.splitTextToSize(`Summary: ${deepExplanation.summary}`, maxWidth);
+        doc.text(summaryLines, margin, yPos);
+        yPos += summaryLines.length * 6 + 4;
+
+        // Perplexity Analysis
+        const perplexityLines = doc.splitTextToSize(`Perplexity: ${deepExplanation.perplexityAnalysis}`, maxWidth);
+        doc.text(perplexityLines, margin, yPos);
+        yPos += perplexityLines.length * 6 + 4;
+
+        // Semantic Drift
+        const semanticLines = doc.splitTextToSize(`Semantic Drift: ${deepExplanation.semanticDriftAnalysis}`, maxWidth);
+        doc.text(semanticLines, margin, yPos);
+        yPos += semanticLines.length * 6 + 4;
+
+        // Check for page break
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        // Repetition
+        const repetitionLines = doc.splitTextToSize(`Repetition: ${deepExplanation.repetitionAnalysis}`, maxWidth);
+        doc.text(repetitionLines, margin, yPos);
+        yPos += repetitionLines.length * 6 + 4;
+
+        // Factual
+        const factualLines = doc.splitTextToSize(`Factual: ${deepExplanation.factualAnalysis}`, maxWidth);
+        doc.text(factualLines, margin, yPos);
+        yPos += factualLines.length * 6 + 4;
+
+        // Stylistic
+        const stylisticLines = doc.splitTextToSize(`Stylistic: ${deepExplanation.stylisticAnalysis}`, maxWidth);
+        doc.text(stylisticLines, margin, yPos);
+        yPos += stylisticLines.length * 6 + 4;
+
+        // Conclusion
+        const conclusionLines = doc.splitTextToSize(`Conclusion: ${deepExplanation.conclusion}`, maxWidth);
+        doc.text(conclusionLines, margin, yPos);
+        yPos += conclusionLines.length * 6 + 10;
+      } else {
+        // Fallback to simple explanation
+        doc.setFont("helvetica", "bold");
+        doc.text("Analysis Explanation:", margin, yPos);
+        yPos += 8;
+        doc.setFont("helvetica", "normal");
+        const explanationLines = doc.splitTextToSize(explanation, maxWidth);
+        doc.text(explanationLines, margin, yPos);
+        yPos += explanationLines.length * 6 + 10;
+      }
 
       // Suspicious Sentences
       if (suspiciousSentences && suspiciousSentences.length > 0) {
@@ -365,6 +416,20 @@ const Results = () => {
           <FactCheckPanel factCheck={factCheckResult} />
         ) : null}
 
+        {/* Deep Explanation Panel */}
+        {deepExplanation && (
+          <DeepExplanationPanel
+            explanation={deepExplanation}
+            scores={{
+              perplexityScore,
+              semanticScore,
+              watermarkScore,
+              writingStyleScore,
+              overallScore
+            }}
+          />
+        )}
+
         {/* Headline Consistency */}
         {headlineConsistency && headline && (
           <Card className="glass-card glass-card-hover p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -389,37 +454,28 @@ const Results = () => {
           </Card>
         )}
 
-        {/* Explanation Panel */}
-        <Card className="glass-card p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">Detailed Analysis Explanation</h3>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  {isExplanationOpen ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent className="mt-4">
-              <div className="space-y-3 text-muted-foreground leading-relaxed">
-                <p>{explanation}</p>
-                <div className="pt-3 border-t border-border/50">
-                  <p className="text-sm font-medium text-foreground mb-2">Key Detection Indicators:</p>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>Repetition patterns and phrase frequency</li>
-                    <li>Unnatural or overly formal phrasing</li>
-                    <li>Incoherent topic transitions</li>
-                    <li>Logical contradictions in statements</li>
-                  </ul>
-                </div>
+        {/* Fallback Explanation Panel (when no deep explanation available) */}
+        {!deepExplanation && (
+          <Card className="glass-card p-6 mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Collapsible open={isExplanationOpen} onOpenChange={setIsExplanationOpen}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground">Analysis Summary</h3>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    {isExplanationOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
+              <CollapsibleContent className="mt-4">
+                <p className="text-muted-foreground leading-relaxed">{explanation}</p>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+        )}
 
         {/* Suspicious Sentences with Color Coding */}
         {suspiciousSentences && suspiciousSentences.length > 0 && (

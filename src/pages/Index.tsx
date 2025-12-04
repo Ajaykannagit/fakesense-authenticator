@@ -3,9 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Upload, Sparkles, Shield, Info, History } from "lucide-react";
+import { Upload, Sparkles, Shield, Info, History, Brain, Fingerprint, FileText, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AnalyzingOverlay } from "@/components/AnalyzingOverlay";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
@@ -13,6 +20,33 @@ import mammoth from 'mammoth';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 const MAX_TEXT_LENGTH = 50000;
+
+const features = [
+  { 
+    title: "Perplexity Analysis", 
+    desc: "AI text pattern detection",
+    icon: Brain,
+    tooltip: "Measures how predictable the text is. AI-generated text often has lower perplexity due to its statistical patterns."
+  },
+  { 
+    title: "Semantic Check", 
+    desc: "Consistency verification",
+    icon: TrendingUp,
+    tooltip: "Analyzes logical flow and topic coherence. Detects unnatural topic shifts common in AI content."
+  },
+  { 
+    title: "Watermark Detection", 
+    desc: "AI fingerprint analysis",
+    icon: Fingerprint,
+    tooltip: "Identifies hidden patterns and statistical signatures left by AI text generators."
+  },
+  { 
+    title: "Fact Verification", 
+    desc: "Cross-reference checking",
+    icon: FileText,
+    tooltip: "Extracts claims and verifies them against trusted sources like Wikipedia."
+  }
+];
 
 const Index = () => {
   const [headline, setHeadline] = useState("");
@@ -135,6 +169,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Analyzing Overlay */}
+      <AnalyzingOverlay isVisible={isAnalyzing} />
+
       {/* Animated background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
       <div className="absolute inset-0" style={{
@@ -145,8 +182,8 @@ const Index = () => {
         {/* Header */}
         <header className="border-b border-border/50 backdrop-blur-xl bg-background/50">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-primary">
+            <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
+              <div className="p-2 rounded-lg bg-gradient-primary group-hover:scale-110 transition-transform duration-300">
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
@@ -220,8 +257,8 @@ const Index = () => {
 
               <div>
                 <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                  <div className="upload-zone border-2 border-dashed border-border/50 rounded-lg p-8 text-center">
+                    <Upload className="upload-icon w-8 h-8 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-sm font-medium text-foreground">
                       Upload a file
                     </p>
@@ -242,40 +279,41 @@ const Index = () => {
               <Button
                 onClick={handleAnalyze}
                 disabled={!text.trim() || isAnalyzing}
-                className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold py-6 text-lg shadow-glow"
+                className="btn-ripple w-full bg-gradient-primary hover:opacity-90 hover:scale-[1.02] text-primary-foreground font-semibold py-6 text-lg shadow-glow transition-transform duration-200"
               >
-                {isAnalyzing ? (
-                  <>
-                    <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="w-5 h-5 mr-2" />
-                    Analyze News
-                  </>
-                )}
+                <Shield className="w-5 h-5 mr-2" />
+                Analyze News
               </Button>
             </div>
           </Card>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-4 gap-6 mt-16">
-            {[
-              { title: "Perplexity Analysis", desc: "AI text pattern detection" },
-              { title: "Semantic Check", desc: "Consistency verification" },
-              { title: "Watermark Detection", desc: "AI fingerprint analysis" },
-              { title: "Fact Verification", desc: "Cross-reference checking" }
-            ].map((feature, i) => (
-              <Card key={i} className="p-6 bg-card/30 backdrop-blur border-border/30 text-center hover:bg-card/50 transition-all">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20" />
-                </div>
-                <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
-                <p className="text-xs text-muted-foreground">{feature.desc}</p>
-              </Card>
-            ))}
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div className="grid md:grid-cols-4 gap-6 mt-16">
+              {features.map((feature, i) => {
+                const Icon = feature.icon;
+                return (
+                  <Tooltip key={i}>
+                    <TooltipTrigger asChild>
+                      <Card 
+                        className="feature-card p-6 bg-card/30 backdrop-blur border-border/30 text-center cursor-default"
+                        style={{ animationDelay: `${i * 0.1}s` }}
+                      >
+                        <div className="feature-icon w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                          <Icon className="w-6 h-6 text-primary" />
+                        </div>
+                        <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
+                        <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs text-sm">
+                      {feature.tooltip}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </main>
       </div>
     </div>

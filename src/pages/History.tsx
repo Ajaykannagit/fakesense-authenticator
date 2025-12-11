@@ -19,7 +19,7 @@ export default function HistoryPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = localStorage.getItem("fakesense-history");
+    const stored = localStorage.getItem("nexo-history");
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -31,7 +31,7 @@ export default function HistoryPage() {
   }, []);
 
   const handleClearHistory = () => {
-    localStorage.removeItem("fakesense-history");
+    localStorage.removeItem("nexo-history");
     setHistory([]);
   };
 
@@ -42,7 +42,7 @@ export default function HistoryPage() {
   const handleDeleteItem = (id: string) => {
     const updated = history.filter((item) => item.id !== id);
     setHistory(updated);
-    localStorage.setItem("fakesense-history", JSON.stringify(updated));
+    localStorage.setItem("nexo-history", JSON.stringify(updated));
   };
 
   return (

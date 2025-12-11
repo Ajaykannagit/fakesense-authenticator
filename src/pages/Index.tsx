@@ -187,7 +187,7 @@ const Index = () => {
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                FakeSense
+                Nexo
               </h1>
             </div>
             <div className="flex items-center gap-2">

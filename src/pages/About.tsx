@@ -24,7 +24,7 @@ const About = () => {
             <div className="p-3 rounded-xl bg-gradient-primary">
               <Shield className="w-8 h-8 text-primary-foreground" />
             </div>
-            <h1 className="text-4xl font-bold">About FakeSense</h1>
+            <h1 className="text-4xl font-bold">About Nexo</h1>
           </div>
           <p className="text-xl text-muted-foreground">
             Advanced AI detection system for identifying fake news and manipulated content
@@ -36,7 +36,7 @@ const About = () => {
             <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               In an era where AI-generated content is becoming increasingly sophisticated,
-              FakeSense provides a crucial defense against misinformation. Our mission is
+              Nexo provides a crucial defense against misinformation. Our mission is
               to empower readers with the tools to verify content authenticity and make
               informed decisions about the information they consume.
             </p>
@@ -145,7 +145,7 @@ const About = () => {
           <Card className="p-8 bg-gradient-primary text-primary-foreground">
             <h2 className="text-2xl font-semibold mb-4">Technology Stack</h2>
             <p className="leading-relaxed mb-4">
-              FakeSense leverages state-of-the-art AI models and natural language processing
+              Nexo leverages state-of-the-art AI models and natural language processing
               techniques to deliver accurate detection results. Our system continuously learns
               and adapts to new AI generation patterns.
             </p>

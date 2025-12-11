@@ -68,10 +68,10 @@ const Results = () => {
         fullData: { results, originalText, headline }
       };
 
-      const stored = localStorage.getItem("fakesense-history");
+      const stored = localStorage.getItem("nexo-history");
       let history = stored ? JSON.parse(stored) : [];
       history = [historyItem, ...history].slice(0, 10);
-      localStorage.setItem("fakesense-history", JSON.stringify(history));
+      localStorage.setItem("nexo-history", JSON.stringify(history));
     } catch (error) {
       console.error("Failed to save to history:", error);
     }
@@ -132,7 +132,7 @@ const Results = () => {
       // Title
       doc.setFontSize(20);
       doc.setFont("helvetica", "bold");
-      doc.text("FakeSense Analysis Report", margin, yPos);
+      doc.text("Nexo Analysis Report", margin, yPos);
       yPos += 15;
 
       // Timestamp
@@ -144,7 +144,7 @@ const Results = () => {
       // Overall Score
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text(`Overall FakeSense Score: ${Math.round(overallScore)}%`, margin, yPos);
+      doc.text(`Overall Nexo Score: ${Math.round(overallScore)}%`, margin, yPos);
       yPos += 10;
 
       // Individual Scores
@@ -316,7 +316,7 @@ const Results = () => {
       doc.text(textLines, margin, yPos);
 
       // Save PDF
-      doc.save(`FakeSense_Report_${Date.now()}.pdf`);
+      doc.save(`Nexo_Report_${Date.now()}.pdf`);
       toast.success("PDF report downloaded successfully");
     } catch (error) {
       console.error("PDF generation error:", error);
@@ -355,7 +355,7 @@ const Results = () => {
           <Card className="glass-card inline-block p-8">
             <ScoreRing score={overallScore} size={160} strokeWidth={12} />
             <p className="text-sm text-muted-foreground mt-4 max-w-md">
-              FakeSense Score combines four detection algorithms to assess content authenticity
+              Nexo Score combines four detection algorithms to assess content authenticity
             </p>
           </Card>
         </div>

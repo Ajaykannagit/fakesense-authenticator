@@ -25,7 +25,7 @@ export interface PatternMatchResult {
   matchedArticleCount: number;
 }
 
-const STORAGE_KEY = "fakesense-learned-patterns";
+const STORAGE_KEY = "nexo-learned-patterns";
 const MAX_PATTERNS = 50;
 
 // Simple hash function for text fingerprinting

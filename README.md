@@ -1,73 +1,74 @@
-# Welcome to your Lovable project
+# Nexo - AI Fake News Detector
 
-## Project info
+Nexo is an advanced AI-powered system designed to detect AI-generated fake news and manipulated content using neural analysis techniques.
 
-**URL**: https://lovable.dev/projects/a976ea41-9fec-4366-a1b8-ba4fbb2292f3
+## Features
 
-## How can I edit this code?
+- **Multi-Algorithm Detection**: Combines four independent detection algorithms (Perplexity, Semantic, Watermark, and Writing Style analysis)
+- **AI-Origin Probability**: Estimates whether text is human-written vs AI-generated
+- **Headline Consistency Check**: Analyzes semantic similarity between headlines and article body
+- **Fact Verification**: Cross-references claims with trusted sources like Wikipedia
+- **Style Signature Analysis**: Computes unique stylistic fingerprints using sentence rhythm, punctuation frequency, and vocabulary spread
+- **Paraphrase Attack Detection**: Identifies articles heavily paraphrased using AI tools
+- **Self-Learning Mode**: Stores patterns from analyzed texts to detect similar suspicious content
+- **Deep Explanation Generator**: Provides detailed summaries explaining why content was flagged
+- **PDF Export**: Download comprehensive analysis reports
+- **Document Support**: Upload PDF, Word (.docx), and text files for analysis
 
-There are several ways of editing your application.
+## Technology Stack
 
-**Use Lovable**
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Charts**: Recharts
+- **PDF Generation**: jsPDF
+- **Document Parsing**: pdf.js, mammoth
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a976ea41-9fec-4366-a1b8-ba4fbb2292f3) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Usage
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **Enter Text**: Paste the article text you want to analyze in the text area
+2. **Add Headline (Optional)**: Enter the article headline for consistency checking
+3. **Upload File (Alternative)**: Upload a PDF, Word document, or text file
+4. **Analyze**: Click the "Analyze News" button to start the analysis
+5. **Review Results**: View the comprehensive analysis including:
+   - Overall authenticity score
+   - Individual detection scores
+   - AI-Origin probability chart
+   - Style signature radar chart
+   - Suspicious sentences with risk levels
+   - Fact verification results
+   - Deep explanation of findings
+6. **Export Report**: Download a PDF report of the analysis
 
-**Use GitHub Codespaces**
+## Detection Modules
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Perplexity Analysis
+Measures text predictability patterns using language model analysis. AI-generated text often has lower perplexity due to its statistical patterns.
 
-## What technologies are used for this project?
+### Semantic Consistency
+Analyzes logical flow and topic coherence. Detects unnatural topic shifts common in AI content.
 
-This project is built with:
+### Watermark Detection
+Identifies hidden patterns and statistical signatures left by AI text generators, including burstiness and token repetition analysis.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Writing Style Analysis
+Evaluates lexical diversity and entropy metrics to detect uniform AI writing patterns.
 
-## How can I deploy this project?
+## License
 
-Simply open [Lovable](https://lovable.dev/projects/a976ea41-9fec-4366-a1b8-ba4fbb2292f3) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT License

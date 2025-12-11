@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,7 +13,8 @@ import { SelfLearningBadge } from "@/components/SelfLearningBadge";
 import { ParaphraseAttackCard } from "@/components/ParaphraseAttackCard";
 import { DeepExplanationPanel } from "@/components/DeepExplanationPanel";
 import { savePattern, matchPatterns, PatternMatchResult } from "@/lib/selfLearning";
-import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2 } from "lucide-react";
+import { withRetry, getErrorMessage } from "@/lib/retry";
+import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2, RefreshCw } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ const Results = () => {
   const [isExplanationOpen, setIsExplanationOpen] = useState(true);
   const [factCheckResult, setFactCheckResult] = useState<FactCheckResult | null>(null);
   const [isFactChecking, setIsFactChecking] = useState(false);
+  const [factCheckError, setFactCheckError] = useState(false);
   const [patternMatch, setPatternMatch] = useState<PatternMatchResult | null>(null);
 
   useEffect(() => {
@@ -82,26 +84,38 @@ const Results = () => {
     }
   }, [results, navigate, originalText, headline]);
 
-  const performFactCheck = async (claims: string[]) => {
+  const performFactCheck = useCallback(async (claims: string[]) => {
     setIsFactChecking(true);
+    setFactCheckError(false);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('fact-check', {
-        body: { claims }
-      });
+      const data = await withRetry(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('fact-check', {
+            body: { claims }
+          });
 
-      if (error) {
-        console.error('Fact check error:', error);
-        toast.error('Fact checking unavailable');
-        return;
-      }
+          if (error) throw error;
+          return data;
+        },
+        {
+          maxAttempts: 2,
+          delayMs: 1000,
+          onRetry: (attempt) => {
+            console.log(`Fact check retry attempt ${attempt}`);
+          }
+        }
+      );
 
       setFactCheckResult(data);
     } catch (error) {
       console.error('Fact check failed:', error);
+      setFactCheckError(true);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsFactChecking(false);
     }
-  };
+  }, []);
 
   if (!results) return null;
 
@@ -411,6 +425,19 @@ const Results = () => {
           <Card className="glass-card p-6 mb-8 animate-fade-in flex items-center justify-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
             <span className="text-muted-foreground">Verifying claims against public sources...</span>
+          </Card>
+        ) : factCheckError ? (
+          <Card className="glass-card p-6 mb-8 animate-fade-in flex items-center justify-between">
+            <span className="text-muted-foreground">Fact checking failed</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => results.extractedClaims && performFactCheck(results.extractedClaims)}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Retry
+            </Button>
           </Card>
         ) : factCheckResult ? (
           <FactCheckPanel factCheck={factCheckResult} />

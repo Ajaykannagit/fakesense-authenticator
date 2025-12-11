@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Upload, Sparkles, Shield, Info, History, Brain, Fingerprint, FileText, TrendingUp } from "lucide-react";
+import { Upload, Sparkles, Shield, Info, History, Brain, Fingerprint, FileText, TrendingUp, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyzingOverlay } from "@/components/AnalyzingOverlay";
+import { withRetry, getErrorMessage, isNetworkError } from "@/lib/retry";
 import {
   Tooltip,
   TooltipContent,
@@ -117,7 +118,7 @@ const Index = () => {
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = useCallback(async () => {
     // Validation
     if (!text.trim()) {
       toast.error("Please enter some text to analyze");
@@ -137,21 +138,34 @@ const Index = () => {
     }
 
     setIsAnalyzing(true);
+    const textToAnalyze = text.length > MAX_TEXT_LENGTH 
+      ? text.substring(0, MAX_TEXT_LENGTH)
+      : text;
+
     try {
-      const textToAnalyze = text.length > MAX_TEXT_LENGTH 
-        ? text.substring(0, MAX_TEXT_LENGTH)
-        : text;
+      const data = await withRetry(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('analyze-news', {
+            body: { text: textToAnalyze, headline: headline.trim() || null }
+          });
 
-      const { data, error } = await supabase.functions.invoke('analyze-news', {
-        body: { text: textToAnalyze, headline: headline.trim() || null }
-      });
+          if (error) throw error;
+          if (!data) throw new Error("No data received from analysis");
+          return data;
+        },
+        {
+          maxAttempts: 3,
+          delayMs: 1500,
+          onRetry: (attempt, error) => {
+            console.log(`Retry attempt ${attempt}:`, error.message);
+            if (isNetworkError(error)) {
+              toast.loading(`Connection issue. Retrying... (${attempt}/3)`, { id: "analyze-retry" });
+            }
+          }
+        }
+      );
 
-      if (error) throw error;
-
-      if (!data) {
-        throw new Error("No data received from analysis");
-      }
-
+      toast.dismiss("analyze-retry");
       navigate('/results', { 
         state: { 
           results: data, 
@@ -160,12 +174,19 @@ const Index = () => {
         } 
       });
     } catch (error) {
+      toast.dismiss("analyze-retry");
       console.error('Analysis error:', error);
-      toast.error("Failed to analyze text. The AI model may be temporarily unavailable. Please try again.");
+      const errorMessage = getErrorMessage(error);
+      toast.error(errorMessage, {
+        action: {
+          label: "Retry",
+          onClick: () => handleAnalyze()
+        }
+      });
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [text, headline, navigate]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">

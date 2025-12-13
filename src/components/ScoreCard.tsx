@@ -39,17 +39,20 @@ export const ScoreCard = ({ title, score, description, icon, tooltip }: ScoreCar
   const tooltipText = tooltip || defaultTooltips[title] || description;
 
   return (
-    <Card className="glass-card glass-card-hover p-6 group">
-      <div className="flex items-start gap-4">
+    <Card className="glass-card glass-card-hover p-6 group relative overflow-hidden">
+      {/* Animated gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      
+      <div className="flex items-start gap-4 relative z-10">
         {icon && (
-          <div className="p-3 rounded-lg bg-primary/10 text-primary animate-pulse-glow group-hover:scale-110 transition-transform duration-300">
+          <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 group-hover:shadow-glow">
             {icon}
           </div>
         )}
         <div className="flex-1 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground">{title}</h3>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">{title}</h3>
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -57,7 +60,7 @@ export const ScoreCard = ({ title, score, description, icon, tooltip }: ScoreCar
                       <Info className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs text-sm">
+                  <TooltipContent side="top" className="max-w-xs text-sm animate-pop-in">
                     {tooltipText}
                   </TooltipContent>
                 </Tooltip>
@@ -69,9 +72,11 @@ export const ScoreCard = ({ title, score, description, icon, tooltip }: ScoreCar
           </div>
           <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden">
             <div
-              className={cn("h-full transition-all duration-1000 ease-out rounded-full", getBarColor())}
+              className={cn("h-full transition-all duration-1000 ease-out rounded-full relative", getBarColor())}
               style={{ width: `${score}%` }}
-            />
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer" />
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>

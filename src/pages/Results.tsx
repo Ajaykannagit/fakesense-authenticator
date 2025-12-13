@@ -345,17 +345,22 @@ const Results = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+
       {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-xl bg-background/50 sticky top-0 z-50">
+      <header className="border-b border-border/50 backdrop-blur-xl bg-background/50 sticky top-0 z-50 animate-fade-in-down relative">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
+          <Button variant="ghost" onClick={() => navigate('/')} className="gap-2 hover:scale-105 transition-transform">
             <ArrowLeft className="w-4 h-4" />
             New Analysis
           </Button>
           <Button
             onClick={handleExportPDF}
-            className="bg-gradient-primary hover:opacity-90"
+            className="bg-gradient-primary hover:opacity-90 hover:scale-105 transition-all hover:shadow-glow"
           >
             <Download className="w-4 h-4 mr-2" />
             Export PDF
@@ -363,16 +368,16 @@ const Results = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-6xl">
+      <main className="container mx-auto px-4 py-12 max-w-6xl relative z-10">
         {/* Self-Learning Pattern Match Alert */}
         <SelfLearningBadge patternMatch={patternMatch} />
 
         {/* Overall Score Section */}
-        <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-3xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
+        <div className="text-center mb-12 animate-fade-in-up">
+          <h1 className="text-3xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent animate-gradient-shift">
             Analysis Results
           </h1>
-          <Card className="glass-card inline-block p-8">
+          <Card className="glass-card inline-block p-8 animate-scale-in hover:shadow-glow transition-shadow duration-500">
             <ScoreRing score={overallScore} size={160} strokeWidth={12} />
             <p className="text-sm text-muted-foreground mt-4 max-w-md">
               Nexo Score combines six detection algorithms to assess content authenticity
@@ -381,45 +386,57 @@ const Results = () => {
         </div>
 
         {/* Detection Scores Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <ScoreCard
-            title="Perplexity Score"
-            score={perplexityScore}
-            description="Measures text predictability patterns"
-            icon={<Brain />}
-          />
-          <ScoreCard
-            title="Semantic Score"
-            score={semanticScore}
-            description="Detects semantic drift and inconsistencies"
-            icon={<TrendingUp />}
-          />
-          <ScoreCard
-            title="Watermark Score"
-            score={watermarkScore}
-            description="Identifies AI-generated fingerprints"
-            icon={<Fingerprint />}
-          />
-          <ScoreCard
-            title="Writing Style Score"
-            score={writingStyleScore}
-            description="Analyzes lexical diversity and patterns"
-            icon={<FileText />}
-          />
-          <ScoreCard
-            title="Emotional Manipulation"
-            score={emotionalManipulationScore ?? 70}
-            description="Detects fear-mongering and bias tactics"
-            icon={<AlertTriangle />}
-            tooltip="Measures emotional manipulation tactics like fear-mongering, loaded language, clickbait patterns, and logical fallacies. Lower scores indicate heavy manipulation."
-          />
-          <ScoreCard
-            title="Source Credibility"
-            score={sourceCredibilityScore ?? 70}
-            description="Assesses journalistic quality signals"
-            icon={<Shield />}
-            tooltip="Evaluates journalistic quality: attribution of claims, specificity of details, appropriate hedging, and professional tone. Lower scores suggest poor credibility."
-          />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className="animate-fade-in-up opacity-0 stagger-1">
+            <ScoreCard
+              title="Perplexity Score"
+              score={perplexityScore}
+              description="Measures text predictability patterns"
+              icon={<Brain />}
+            />
+          </div>
+          <div className="animate-fade-in-up opacity-0 stagger-2">
+            <ScoreCard
+              title="Semantic Score"
+              score={semanticScore}
+              description="Detects semantic drift and inconsistencies"
+              icon={<TrendingUp />}
+            />
+          </div>
+          <div className="animate-fade-in-up opacity-0 stagger-3">
+            <ScoreCard
+              title="Watermark Score"
+              score={watermarkScore}
+              description="Identifies AI-generated fingerprints"
+              icon={<Fingerprint />}
+            />
+          </div>
+          <div className="animate-fade-in-up opacity-0 stagger-4">
+            <ScoreCard
+              title="Writing Style Score"
+              score={writingStyleScore}
+              description="Analyzes lexical diversity and patterns"
+              icon={<FileText />}
+            />
+          </div>
+          <div className="animate-fade-in-up opacity-0 stagger-5">
+            <ScoreCard
+              title="Emotional Manipulation"
+              score={emotionalManipulationScore ?? 70}
+              description="Detects fear-mongering and bias tactics"
+              icon={<AlertTriangle />}
+              tooltip="Measures emotional manipulation tactics like fear-mongering, loaded language, clickbait patterns, and logical fallacies. Lower scores indicate heavy manipulation."
+            />
+          </div>
+          <div className="animate-fade-in-up opacity-0 stagger-6">
+            <ScoreCard
+              title="Source Credibility"
+              score={sourceCredibilityScore ?? 70}
+              description="Assesses journalistic quality signals"
+              icon={<Shield />}
+              tooltip="Evaluates journalistic quality: attribution of claims, specificity of details, appropriate hedging, and professional tone. Lower scores suggest poor credibility."
+            />
+          </div>
         </div>
 
         {/* AI-Origin Probability Chart */}

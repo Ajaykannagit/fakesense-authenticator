@@ -4,9 +4,10 @@ import { AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
 interface SuspiciousSentenceProps {
   text: string;
   riskScore: number;
+  reason?: string;
 }
 
-export const SuspiciousSentence = ({ text, riskScore }: SuspiciousSentenceProps) => {
+export const SuspiciousSentence = ({ text, riskScore, reason }: SuspiciousSentenceProps) => {
   const getRiskLevel = () => {
     if (riskScore >= 71) return {
       level: "high",
@@ -49,6 +50,11 @@ export const SuspiciousSentence = ({ text, riskScore }: SuspiciousSentenceProps)
             </span>
           </div>
           <p className="text-sm text-foreground leading-relaxed">{text}</p>
+          {reason && (
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              Reason: {reason}
+            </p>
+          )}
         </div>
       </div>
     </div>

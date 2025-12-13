@@ -61,7 +61,7 @@ Additionally, analyze the semantic similarity between the provided headline and 
 Headline: "${headline}"`
       : '';
 
-    // Perform AI analysis using Lovable AI Gateway
+    // Perform AI analysis using Lovable AI Gateway with enhanced detection
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -69,75 +69,131 @@ Headline: "${headline}"`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [
           {
             role: 'system',
-            content: `You are FakeSense, an expert AI system for detecting AI-generated fake news and manipulated content using multi-signal detection.
+            content: `You are Nexo, an advanced AI system for detecting AI-generated fake news, misinformation, and manipulated content using multi-signal forensic analysis.
 
-Your task is to analyze the provided text and return four specific detection scores (0-100):
+Perform DEEP linguistic forensic analysis on the provided text. Apply rigorous statistical and pattern-based detection methods.
 
-1. PERPLEXITY SCORE (0-100): Using GPT-2 model analysis, measure text predictability patterns. AI-generated text has lower perplexity (more predictable token sequences). Score 0 = definitely AI-generated (very predictable), 100 = definitely human-written (natural unpredictability).
+## CORE DETECTION MODULES (0-100 scores, where LOWER = more AI-like/suspicious):
 
-2. SEMANTIC DRIFT SCORE (0-100): Using sentence-embedding cosine similarity, detect semantic inconsistencies between consecutive sections. Manipulated content shows sudden topic shifts and logical breaks. Score 0 = high semantic drift (manipulated), 100 = perfect semantic flow (authentic).
+### 1. PERPLEXITY SCORE
+Analyze token-level predictability using language model principles:
+- Measure how "surprising" word choices are in context
+- AI text has LOW perplexity (predictable, template-like sequences)
+- Human text has HIGHER perplexity (creative, unexpected phrasings)
+- Check for: repetitive sentence starters, formulaic transitions, predictable conclusions
+Score: 0 = highly predictable (AI), 100 = naturally unpredictable (human)
 
-3. WATERMARK FINGERPRINT SCORE (0-100): Analyze burstiness patterns and token repetition to detect neural fingerprints. Check for: repetitive sentence structures, unnatural uniformity, low lexical diversity, predictable rhythm. Score 0 = strong AI watermark signatures, 100 = natural human writing patterns.
+### 2. SEMANTIC COHERENCE SCORE  
+Analyze semantic flow and logical consistency:
+- Detect topic drift between paragraphs
+- Identify logical non-sequiturs and disconnected ideas
+- Check for circular reasoning or self-contradictions
+- Measure argument structure coherence
+Score: 0 = poor coherence/manipulated, 100 = excellent logical flow
 
-4. WRITING STYLE SCORE (0-100): Measure lexical diversity (unique word ratio) and entropy (information density). Human writing shows higher variance. Score 0 = low diversity/entropy (AI-like), 100 = high diversity/entropy (human-like).
+### 3. WATERMARK FINGERPRINT SCORE
+Detect neural network generation signatures:
+- Burstiness patterns (uniform vs varied sentence rhythms)
+- Token repetition frequency and distribution
+- Phrase-level patterns (AI often reuses similar constructions)
+- Statistical uniformity in word choice distribution
+Score: 0 = strong AI signatures, 100 = natural human patterns
 
-5. STYLE SIGNATURE FINGERPRINT: Compute a unique stylistic fingerprint based on:
-- "sentenceRhythm": <number 0-100> - Consistency of sentence lengths and cadence (0 = highly uniform/robotic, 100 = naturally varied)
-- "punctuationFrequency": <number 0-100> - Diversity in punctuation usage (0 = minimal/repetitive, 100 = rich variety)
-- "vocabularySpread": <number 0-100> - Range of vocabulary used (0 = limited/repetitive words, 100 = diverse vocabulary)
-- "tokenTransitions": <number 0-100> - Naturalness of word-to-word transitions (0 = predictable/template-like, 100 = organic flow)
-- "matchesAiPattern": <boolean> - true if the style matches typical AI-pattern clusters
-- "patternDescription": <string> - If matchesAiPattern is true, explain which AI patterns were detected
+### 4. WRITING STYLE SCORE
+Measure linguistic diversity and authenticity:
+- Lexical diversity (Type-Token Ratio analysis)
+- Syntactic variety (sentence structure variation)
+- Voice consistency and personality markers
+- Idiomatic usage and colloquialisms
+Score: 0 = low diversity/mechanical, 100 = rich/authentic
 
-6. CLAIM EXTRACTION: Extract 3-5 key factual claims from the text that can be verified. Return as an array of strings.
+### 5. EMOTIONAL MANIPULATION SCORE (NEW)
+Detect persuasion and manipulation tactics:
+- Fear-mongering language and urgency cues
+- Loaded/biased language and emotional triggers
+- Clickbait patterns and sensationalism
+- Appeal to outrage, fear, or tribalism
+- Logical fallacy indicators (ad hominem, straw man, false dichotomy)
+Score: 0 = heavy manipulation, 100 = neutral/balanced
 
-7. PARAPHRASE ATTACK DETECTION: Detect if the text has been heavily paraphrased using AI tools to bypass detectors. Analyze:
-- "suspicionScore": <number 0-100> - Overall likelihood of AI-assisted paraphrasing (0 = natural writing, 100 = heavily paraphrased)
-- "embeddingVariance": <number 0-100> - Sentence embedding variance (0 = unnaturally uniform embeddings suggesting systematic rewriting, 100 = natural variance)
-- "synonymDensity": <number 0-100> - Unnatural synonym density (0 = normal word choices, 100 = excessive synonym substitution)
-- "explanation": <string> - Brief explanation of paraphrase indicators detected
+### 6. SOURCE CREDIBILITY SIGNALS (NEW)
+Analyze journalistic quality indicators:
+- Attribution of claims (named sources vs "experts say")
+- Specificity of details (vague generalizations vs concrete facts)
+- Hedging language balance (appropriate uncertainty vs overconfidence)
+- Professional tone vs sensationalism
+Score: 0 = poor credibility signals, 100 = high journalistic standards
 
-Also perform sentence-level analysis. Identify 3-7 suspicious sentences with their individual risk scores.
+### 7. STYLE SIGNATURE FINGERPRINT
+Compute unique stylistic fingerprint:
+- "sentenceRhythm": 0-100 (0 = robotic uniformity, 100 = natural variation)
+- "punctuationFrequency": 0-100 (diversity in punctuation)
+- "vocabularySpread": 0-100 (vocabulary range)
+- "tokenTransitions": 0-100 (word-to-word naturalness)
+- "matchesAiPattern": boolean (matches known AI patterns)
+- "patternDescription": string (which AI patterns detected)
 
-AI-ORIGIN PROBABILITY: Using zero-shot classification and entropy-based heuristics, estimate the probability that this text is AI-generated vs human-written. Consider all four detection scores, linguistic patterns, and stylistic markers. Return two values that sum to 100:
-- "aiOriginProbability": <number 0-100> - likelihood text is AI-generated
-- "humanOriginProbability": <number 0-100> - likelihood text is human-written
+### 8. PARAPHRASE ATTACK DETECTION
+Detect AI-assisted rewriting to evade detection:
+- "suspicionScore": 0-100 (likelihood of AI paraphrasing)
+- "embeddingVariance": 0-100 (sentence embedding uniformity)
+- "synonymDensity": 0-100 (unnatural synonym substitution)
+- "explanation": string (paraphrase indicators)
 
-${headline ? 'HEADLINE CONSISTENCY CHECK: If a headline is provided, analyze semantic similarity between headline and body. Return "headlineConsistency" object with score (0-100) and explanation.' : ''}
+### 9. CLAIM EXTRACTION & VERIFICATION READINESS
+Extract 3-5 key factual claims that can be fact-checked. For each claim:
+- Assess verifiability (can this be independently verified?)
+- Note specificity (concrete or vague?)
 
-8. DEEP EXPLANATION GENERATOR: Based on ALL scores and patterns detected, generate a comprehensive explanation of WHY the system flagged this article. The explanation must include:
-- "summary": <string> - 2-3 sentence overview of the key findings
-- "perplexityAnalysis": <string> - Explain low/high perplexity findings with specific examples from the text
-- "semanticDriftAnalysis": <string> - Describe any semantic inconsistencies, topic jumps, or logical breaks detected
-- "repetitionAnalysis": <string> - Detail repetition loops, phrase frequency anomalies, and predictable patterns found
-- "factualAnalysis": <string> - Note any factual mismatches, contradictions, or unverifiable claims
-- "stylisticAnalysis": <string> - Explain stylistic anomalies like uniform sentence structure, limited vocabulary, or unnatural rhythm
-- "conclusion": <string> - Final assessment synthesizing all signals into an actionable verdict
+### 10. SENTENCE-LEVEL ANALYSIS
+Identify 3-7 most suspicious sentences with individual risk scores and WHY they're suspicious.
 
-Return ONLY a JSON object in this exact format:
+### 11. AI-ORIGIN PROBABILITY
+Using all signals, estimate:
+- "aiOriginProbability": 0-100 (likelihood AI-generated)
+- "humanOriginProbability": 0-100 (likelihood human-written)
+Must sum to 100.
+
+${headline ? '### 12. HEADLINE CONSISTENCY CHECK\nAnalyze semantic match between headline and body. Return "headlineConsistency" with score and explanation.' : ''}
+
+### 13. DEEP EXPLANATION GENERATOR
+Generate comprehensive explanation including:
+- "summary": 2-3 sentence key findings overview
+- "perplexityAnalysis": Specific examples of predictable/unpredictable patterns
+- "semanticDriftAnalysis": Topic jumps, logical breaks with examples
+- "repetitionAnalysis": Repeated phrases, patterns with frequency
+- "factualAnalysis": Unverifiable claims, contradictions
+- "stylisticAnalysis": Writing quality anomalies
+- "emotionalAnalysis": Manipulation tactics detected (NEW)
+- "credibilityAnalysis": Journalistic quality assessment (NEW)
+- "conclusion": Final verdict with confidence level
+
+## RESPONSE FORMAT (STRICT JSON):
 {
   "perplexityScore": <number 0-100>,
   "semanticScore": <number 0-100>,
   "watermarkScore": <number 0-100>,
   "writingStyleScore": <number 0-100>,
+  "emotionalManipulationScore": <number 0-100>,
+  "sourceCredibilityScore": <number 0-100>,
   "aiOriginProbability": <number 0-100>,
   "humanOriginProbability": <number 0-100>,
   "styleSignature": {
-    "sentenceRhythm": <number 0-100>,
-    "punctuationFrequency": <number 0-100>,
-    "vocabularySpread": <number 0-100>,
-    "tokenTransitions": <number 0-100>,
+    "sentenceRhythm": <number>,
+    "punctuationFrequency": <number>,
+    "vocabularySpread": <number>,
+    "tokenTransitions": <number>,
     "matchesAiPattern": <boolean>,
     "patternDescription": "<string or null>"
   },
   "paraphraseAttack": {
-    "suspicionScore": <number 0-100>,
-    "embeddingVariance": <number 0-100>,
-    "synonymDensity": <number 0-100>,
+    "suspicionScore": <number>,
+    "embeddingVariance": <number>,
+    "synonymDensity": <number>,
     "explanation": "<string>"
   },
   "deepExplanation": {
@@ -147,29 +203,30 @@ Return ONLY a JSON object in this exact format:
     "repetitionAnalysis": "<string>",
     "factualAnalysis": "<string>",
     "stylisticAnalysis": "<string>",
+    "emotionalAnalysis": "<string>",
+    "credibilityAnalysis": "<string>",
     "conclusion": "<string>"
   },
   "extractedClaims": ["claim1", "claim2", "claim3"],
   "suspiciousSentences": [
-    {"text": "sentence1", "riskScore": <number 0-100>},
-    {"text": "sentence2", "riskScore": <number 0-100>}
+    {"text": "sentence", "riskScore": <number>, "reason": "<why suspicious>"}
   ],
-  "explanation": "<3-4 sentence summary mentioning: repetition patterns (with examples), unnatural phrasing (specific), incoherent transitions (specific), logical contradictions (specific)>"${headline ? ',\n  "headlineConsistency": {"score": <number 0-100>, "explanation": "..."}' : ''}
+  "explanation": "<4-5 sentence summary with specific examples>"${headline ? ',\n  "headlineConsistency": {"score": <number>, "explanation": "..."}' : ''}
 }
 
-Risk Score Guidelines:
-- 0-40: Safe (green) - Natural human writing patterns
-- 41-70: Medium risk (yellow) - Some concerning indicators
-- 71-100: High risk (red) - Strong AI/manipulation signals
+## SCORING CALIBRATION:
+- 0-30: HIGH RISK (red) - Strong manipulation/AI signals
+- 31-60: MEDIUM RISK (yellow) - Notable concerns
+- 61-100: LOW RISK (green) - Appears authentic
 
-Be strict in your analysis. Most AI-generated content should score below 35 on perplexity and watermark scores.${headlinePrompt}`
+Be thorough and cite specific text examples in your analysis.${headlinePrompt}`
           },
           {
             role: 'user',
-            content: `Analyze this text for AI-generated fake news:\n\n${analysisText}`
+            content: `Perform comprehensive forensic analysis on this text for AI-generation and misinformation detection:\n\n${analysisText}`
           }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
@@ -223,26 +280,37 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       analysisResult = JSON.parse(jsonString);
       
       // Validate required fields
-      if (typeof analysisResult.perplexityScore !== 'number' ||
-          typeof analysisResult.semanticScore !== 'number' ||
-          typeof analysisResult.watermarkScore !== 'number' ||
-          typeof analysisResult.writingStyleScore !== 'number' ||
-          typeof analysisResult.aiOriginProbability !== 'number' ||
-          typeof analysisResult.humanOriginProbability !== 'number') {
-        throw new Error('Missing required score fields');
+      const requiredScores = [
+        'perplexityScore', 'semanticScore', 'watermarkScore', 'writingStyleScore',
+        'aiOriginProbability', 'humanOriginProbability'
+      ];
+      
+      for (const field of requiredScores) {
+        if (typeof analysisResult[field] !== 'number') {
+          console.error(`Missing or invalid field: ${field}`);
+          throw new Error(`Missing required score field: ${field}`);
+        }
       }
+      
+      // Provide defaults for new optional scores
+      analysisResult.emotionalManipulationScore = analysisResult.emotionalManipulationScore ?? 70;
+      analysisResult.sourceCredibilityScore = analysisResult.sourceCredibilityScore ?? 70;
+      
     } catch (parseError) {
       console.error('Failed to parse AI response:', content);
       console.error('Parse error:', parseError);
       throw new Error('Invalid response format from AI');
     }
 
-    // Calculate overall FakeSense score (weighted average of 4 detection modules)
+    // Calculate overall Nexo score (weighted average of 6 detection modules)
+    // Enhanced weighting: core 4 modules + new manipulation/credibility signals
     const overallScore = Math.round(
-      (analysisResult.perplexityScore * 0.25) +
-      (analysisResult.semanticScore * 0.25) +
-      (analysisResult.watermarkScore * 0.25) +
-      (analysisResult.writingStyleScore * 0.25)
+      (analysisResult.perplexityScore * 0.20) +
+      (analysisResult.semanticScore * 0.20) +
+      (analysisResult.watermarkScore * 0.20) +
+      (analysisResult.writingStyleScore * 0.15) +
+      (analysisResult.emotionalManipulationScore * 0.15) +
+      (analysisResult.sourceCredibilityScore * 0.10)
     );
 
     const finalResult = {
@@ -251,6 +319,8 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       semanticScore: analysisResult.semanticScore,
       watermarkScore: analysisResult.watermarkScore,
       writingStyleScore: analysisResult.writingStyleScore,
+      emotionalManipulationScore: analysisResult.emotionalManipulationScore,
+      sourceCredibilityScore: analysisResult.sourceCredibilityScore,
       aiOriginProbability: analysisResult.aiOriginProbability,
       humanOriginProbability: analysisResult.humanOriginProbability,
       styleSignature: analysisResult.styleSignature || null,
@@ -258,7 +328,7 @@ Be strict in your analysis. Most AI-generated content should score below 35 on p
       deepExplanation: analysisResult.deepExplanation || null,
       extractedClaims: analysisResult.extractedClaims || [],
       suspiciousSentences: analysisResult.suspiciousSentences || [],
-      explanation: analysisResult.explanation || 'Multi-signal analysis complete.',
+      explanation: analysisResult.explanation || 'Multi-signal forensic analysis complete.',
       ...(analysisResult.headlineConsistency && { headlineConsistency: analysisResult.headlineConsistency })
     };
 

@@ -14,7 +14,7 @@ import { ParaphraseAttackCard } from "@/components/ParaphraseAttackCard";
 import { DeepExplanationPanel } from "@/components/DeepExplanationPanel";
 import { savePattern, matchPatterns, PatternMatchResult } from "@/lib/selfLearning";
 import { withRetry, getErrorMessage } from "@/lib/retry";
-import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Brain, FileText, Fingerprint, TrendingUp, Download, ChevronDown, ChevronUp, Target, Loader2, RefreshCw, AlertTriangle, Shield } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,6 +125,8 @@ const Results = () => {
     semanticScore,
     watermarkScore,
     writingStyleScore,
+    emotionalManipulationScore,
+    sourceCredibilityScore,
     aiOriginProbability,
     humanOriginProbability,
     styleSignature,
@@ -174,6 +176,10 @@ const Results = () => {
       doc.text(`Watermark Score: ${Math.round(watermarkScore)}%`, margin + 5, yPos);
       yPos += 6;
       doc.text(`Writing Style Score: ${Math.round(writingStyleScore)}%`, margin + 5, yPos);
+      yPos += 6;
+      doc.text(`Emotional Manipulation: ${Math.round(emotionalManipulationScore ?? 70)}%`, margin + 5, yPos);
+      yPos += 6;
+      doc.text(`Source Credibility: ${Math.round(sourceCredibilityScore ?? 70)}%`, margin + 5, yPos);
       yPos += 10;
 
       // AI-Origin Probability
@@ -369,13 +375,13 @@ const Results = () => {
           <Card className="glass-card inline-block p-8">
             <ScoreRing score={overallScore} size={160} strokeWidth={12} />
             <p className="text-sm text-muted-foreground mt-4 max-w-md">
-              Nexo Score combines four detection algorithms to assess content authenticity
+              Nexo Score combines six detection algorithms to assess content authenticity
             </p>
           </Card>
         </div>
 
         {/* Detection Scores Grid */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <ScoreCard
             title="Perplexity Score"
             score={perplexityScore}
@@ -399,6 +405,20 @@ const Results = () => {
             score={writingStyleScore}
             description="Analyzes lexical diversity and patterns"
             icon={<FileText />}
+          />
+          <ScoreCard
+            title="Emotional Manipulation"
+            score={emotionalManipulationScore ?? 70}
+            description="Detects fear-mongering and bias tactics"
+            icon={<AlertTriangle />}
+            tooltip="Measures emotional manipulation tactics like fear-mongering, loaded language, clickbait patterns, and logical fallacies. Lower scores indicate heavy manipulation."
+          />
+          <ScoreCard
+            title="Source Credibility"
+            score={sourceCredibilityScore ?? 70}
+            description="Assesses journalistic quality signals"
+            icon={<Shield />}
+            tooltip="Evaluates journalistic quality: attribution of claims, specificity of details, appropriate hedging, and professional tone. Lower scores suggest poor credibility."
           />
         </div>
 
@@ -518,6 +538,7 @@ const Results = () => {
                     key={index}
                     text={typeof sentence === 'string' ? sentence : sentence.text}
                     riskScore={typeof sentence === 'string' ? 50 : sentence.riskScore}
+                    reason={typeof sentence === 'string' ? undefined : sentence.reason}
                   />
                 ))}
               </div>
